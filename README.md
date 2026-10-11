@@ -51,6 +51,7 @@ The Universe Agent System (UAS) is a concept for an adaptive artificial intellig
 
 ## Project documents
 
+- [Research landscape and supporting evidence](docs/RESEARCH_LANDSCAPE.md) — related projects, papers, benchmarks, and tools organized around the UAS concept.
 - [Project description](Project%20Description%20Universe%20Agent%20System%20%28UAS%29%2016e3df2ced6d8028aaceed7a9f4923e9.md)
 - [Initial case study](Universe%20Agent%20System%2016e3df2ced6d80e49c50f6e40b90df82.md)
 - [Expanded case study](Universe%20Agent%20System%201963df2ced6d80cca9a3de1f01471efe.md)
