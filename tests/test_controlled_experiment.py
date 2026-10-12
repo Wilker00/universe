@@ -1,10 +1,14 @@
 from collections import Counter
+import csv
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-from uas.controlled_experiment import summarize_controlled_results
+from uas.controlled_experiment import (
+    run_controlled_experiment,
+    summarize_controlled_results,
+)
 from uas.controlled_replay import (
     sample_balanced_transitions,
     select_controlled_episodes,
@@ -145,3 +149,65 @@ def test_controlled_summary_reports_auc_and_negative_transfer() -> None:
     assert comparison["mean_auc_delta_vs_no_memory"] == 0.25
     assert comparison["negative_transfer_rate"] == 0.0
     assert comparison["mean_sustained_threshold_step_delta"] == -100.0
+
+
+def test_controlled_experiment_resumes_completed_runs(tmp_path: Path) -> None:
+    store = MemoryStore(tmp_path / "memory")
+    _add_episode(store, index=0, success=True, random_policy=False, length=10)
+
+    output_dir = tmp_path / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    existing_rows = [
+        {
+            "task_id": "hard_upper",
+            "mode": "no_memory",
+            "seed": 0,
+            "timestep": 0,
+            "success_rate": 0.0,
+            "mean_reward": 0.0,
+            "mean_steps": 10.0,
+            "mean_collisions": 0.0,
+            "selected_episodes": 0,
+            "selected_successful_episodes": 0,
+            "prefilled_transitions": 0,
+        },
+        {
+            "task_id": "hard_upper",
+            "mode": "no_memory",
+            "seed": 0,
+            "timestep": 10,
+            "success_rate": 0.8,
+            "mean_reward": 0.8,
+            "mean_steps": 10.0,
+            "mean_collisions": 0.0,
+            "selected_episodes": 0,
+            "selected_successful_episodes": 0,
+            "prefilled_transitions": 0,
+        },
+    ]
+    csv_path = output_dir / "learning_curves.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(existing_rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(existing_rows)
+
+    run_controlled_experiment(
+        memory_directory=tmp_path / "memory",
+        output_directory=output_dir,
+        task_ids=["hard_upper"],
+        modes=["no_memory"],
+        seeds=[0],
+        train_steps=10,
+        evaluation_interval=10,
+        evaluation_episodes=1,
+        episode_budget=1,
+        replay_transition_budget=1,
+    )
+
+    with csv_path.open("r", encoding="utf-8") as f:
+        reader = list(csv.DictReader(f))
+    assert len(reader) == 2
+    assert reader[1]["timestep"] == "10"
+    summary_path = output_dir / "summary.json"
+    assert summary_path.is_file()
+

@@ -4,7 +4,7 @@ This directory contains the complete UAS v0.2 controlled memory-transfer benchma
 
 ## Result
 
-Across 100 complete training runs and 1,300 evaluations, all memory conditions demonstrated a statistically significant improvement in sample efficiency over learning from scratch (`no_memory`):
+Across 100 complete training runs and 1,300 evaluations, all memory conditions demonstrated positive mean AUC deltas over learning from scratch (`no_memory`), with approximate 95% confidence intervals remaining strictly above zero on this benchmark:
 
 | Condition | Retrieved episodes | Replay transitions | Mean AUC delta vs. no memory | 95% Confidence interval | Negative transfer rate | Mean steps saved to 0.8 success | Mean final success delta |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -19,11 +19,11 @@ Across 100 complete training runs and 1,300 evaluations, all memory conditions d
 ## Key Findings & Interpretation
 
 1. **Memory prefill reliably accelerates online learning:**
-   Injecting 200 transitions into the SAC replay buffer consistently saved between 694 and 956 environment steps to reach the 80% success threshold. The 95% confidence intervals for all four memory modes are strictly above zero.
+   Injecting 200 transitions into the SAC replay buffer consistently saved between 694 and 956 environment steps to reach the 80% success threshold. The approximate 95% confidence intervals for all four memory modes are strictly above zero on this benchmark.
 2. **Naive and random replay outperformed governed and similarity retrieval:**
    Naive retrieval produced the highest overall AUC delta (+0.138) and random retrieval had the lowest negative-transfer rate (15%). Governed retrieval (+0.081) and similarity retrieval (+0.085) showed lower mean improvements.
-3. **Why greedy governance fell short under shift:**
-   In `hard_upper` and `hard_lower`, obstacle bounds are shifted relative to the source tasks (`open`, `upper_gap`, `lower_gap`). Governed retrieval strictly selected high-reward source trajectories. Because those paths were optimized for older obstacle placements, agents experienced distribution bias when the layout shifted. Conversely, naive and random replay contained diverse exploratory transitions that provided wider state-space coverage for the critic.
+3. **Hypothesis on governance under distribution shift:**
+   In `hard_upper` and `hard_lower`, obstacle bounds are shifted relative to the source tasks (`open`, `upper_gap`, `lower_gap`). One leading hypothesis for why greedy governance underperformed naive and random selection is distribution bias: governed retrieval strictly prioritized high-reward source trajectories optimized for original obstacle placements, whereas naive and random replay supplied diverse exploratory transitions offering wider state-space coverage for the critic. Future ablations will formally test this hypothesis.
 4. **Takeaway for v0.3:**
    Governed retrieval should not filter solely for source-task success. Effective experience memory for out-of-distribution tasks must govern for **task relevance combined with state-space diversity and boundary coverage**.
 

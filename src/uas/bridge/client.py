@@ -5,14 +5,14 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
-import tempfile
 import time
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import numpy as np
 
-from uas.bridge.models import Episode, SearchQuery
+from uas.bridge.models import CompatibilityReport, Episode, SearchQuery
 
 
 def _safe_replace(
@@ -44,11 +44,17 @@ class MemoryBridge:
         self.trajectory_directory.mkdir(parents=True, exist_ok=True)
         self._initialize_database()
 
-    def _connect(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connect(self) -> Generator[sqlite3.Connection, None, None]:
+        """Context manager that guarantees connection is closed on Windows."""
         conn = sqlite3.connect(self.database_path)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
-        return conn
+        try:
+            with conn:
+                yield conn
+        finally:
+            conn.close()
 
     def _initialize_database(self) -> None:
         with self._connect() as conn:
@@ -59,6 +65,9 @@ class MemoryBridge:
                     task TEXT NOT NULL,
                     embodiment TEXT NOT NULL,
                     framework TEXT NOT NULL,
+                    observation_schema TEXT NOT NULL,
+                    action_schema TEXT NOT NULL,
+                    action_type TEXT NOT NULL,
                     success INTEGER NOT NULL,
                     total_reward REAL NOT NULL,
                     steps INTEGER NOT NULL,
@@ -69,17 +78,20 @@ class MemoryBridge:
                 """
             )
             conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_task ON episodes(task)"
+                """
+                CREATE TABLE IF NOT EXISTS episode_tags (
+                    episode_id TEXT NOT NULL,
+                    tag TEXT NOT NULL,
+                    PRIMARY KEY (episode_id, tag),
+                    FOREIGN KEY (episode_id) REFERENCES episodes(episode_id) ON DELETE CASCADE
+                )
+                """
             )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_embodiment ON episodes(embodiment)"
-            )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_framework ON episodes(framework)"
-            )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_success ON episodes(success)"
-            )
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_task ON episodes(task)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_embodiment ON episodes(embodiment)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_framework ON episodes(framework)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_success ON episodes(success)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_tag ON episode_tags(tag)")
 
     def record(self, episode: Episode) -> str:
         """Persist an episode from any framework into the shared memory bridge."""
@@ -101,19 +113,27 @@ class MemoryBridge:
             temporary_file.unlink(missing_ok=True)
 
         metadata_json = json.dumps(episode.metadata)
+        tags = episode.metadata.get("tags", [])
+        if isinstance(tags, str):
+            tags = [tags]
+
         with self._connect() as conn:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO episodes (
-                    episode_id, task, embodiment, framework, success,
-                    total_reward, steps, created_at, metadata_json, trajectory_file
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    episode_id, task, embodiment, framework, observation_schema,
+                    action_schema, action_type, success, total_reward, steps,
+                    created_at, metadata_json, trajectory_file
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     episode.episode_id,
                     episode.task,
                     episode.embodiment,
                     episode.framework,
+                    episode.observation_schema,
+                    episode.action_schema,
+                    episode.action_type,
                     int(episode.success),
                     float(episode.total_reward),
                     episode.steps,
@@ -122,6 +142,11 @@ class MemoryBridge:
                     trajectory_file,
                 ),
             )
+            for tag in tags:
+                conn.execute(
+                    "INSERT OR IGNORE INTO episode_tags (episode_id, tag) VALUES (?, ?)",
+                    (episode.episode_id, str(tag)),
+                )
         return episode.episode_id
 
     def search(
@@ -129,34 +154,54 @@ class MemoryBridge:
         task: str | None = None,
         embodiment: str | None = None,
         framework: str | None = None,
+        observation_schema: str | None = None,
+        action_schema: str | None = None,
+        action_type: str | None = None,
         success_only: bool = False,
         min_reward: float | None = None,
         tags: list[str] | None = None,
         limit: int = 10,
     ) -> list[Episode]:
-        """Search and load matching episodes from the memory bridge."""
-        query_parts = ["1=1"]
+        """Search and load matching episodes from the memory bridge with correct SQL tag filtering."""
+        where_clauses = ["1=1"]
         params: list[Any] = []
+        join_clause = ""
+
+        if tags:
+            tag_placeholders = ",".join("?" for _ in tags)
+            join_clause = f"JOIN episode_tags t ON e.episode_id = t.episode_id"
+            where_clauses.append(f"t.tag IN ({tag_placeholders})")
+            params.extend(tags)
 
         if task is not None:
-            query_parts.append("task = ?")
+            where_clauses.append("e.task = ?")
             params.append(task)
         if embodiment is not None:
-            query_parts.append("embodiment = ?")
+            where_clauses.append("e.embodiment = ?")
             params.append(embodiment)
         if framework is not None:
-            query_parts.append("framework = ?")
+            where_clauses.append("e.framework = ?")
             params.append(framework)
+        if observation_schema is not None:
+            where_clauses.append("e.observation_schema = ?")
+            params.append(observation_schema)
+        if action_schema is not None:
+            where_clauses.append("e.action_schema = ?")
+            params.append(action_schema)
+        if action_type is not None:
+            where_clauses.append("e.action_type = ?")
+            params.append(action_type)
         if success_only:
-            query_parts.append("success = 1")
+            where_clauses.append("e.success = 1")
         if min_reward is not None:
-            query_parts.append("total_reward >= ?")
+            where_clauses.append("e.total_reward >= ?")
             params.append(float(min_reward))
 
         sql = f"""
-            SELECT * FROM episodes
-            WHERE {' AND '.join(query_parts)}
-            ORDER BY total_reward DESC
+            SELECT DISTINCT e.* FROM episodes e
+            {join_clause}
+            WHERE {' AND '.join(where_clauses)}
+            ORDER BY e.total_reward DESC
             LIMIT ?
         """
         params.append(limit)
@@ -166,12 +211,6 @@ class MemoryBridge:
 
         results: list[Episode] = []
         for row in rows:
-            metadata = json.loads(row["metadata_json"])
-            if tags:
-                record_tags = metadata.get("tags", [])
-                if not any(tag in record_tags for tag in tags):
-                    continue
-
             traj_path = self.trajectory_directory / row["trajectory_file"]
             if not traj_path.is_file():
                 continue
@@ -182,6 +221,9 @@ class MemoryBridge:
                     task=row["task"],
                     embodiment=row["embodiment"],
                     framework=row["framework"],
+                    observation_schema=row["observation_schema"],
+                    action_schema=row["action_schema"],
+                    action_type=row["action_type"],
                     success=bool(row["success"]),
                     total_reward=float(row["total_reward"]),
                     observations=data["observations"],
@@ -189,7 +231,7 @@ class MemoryBridge:
                     rewards=data["rewards"],
                     terminated=data["terminated"],
                     truncated=data["truncated"],
-                    metadata=metadata,
+                    metadata=json.loads(row["metadata_json"]),
                     created_at=row["created_at"],
                 )
                 results.append(episode)
@@ -214,6 +256,9 @@ class MemoryBridge:
                 task=row["task"],
                 embodiment=row["embodiment"],
                 framework=row["framework"],
+                observation_schema=row["observation_schema"],
+                action_schema=row["action_schema"],
+                action_type=row["action_type"],
                 success=bool(row["success"]),
                 total_reward=float(row["total_reward"]),
                 observations=data["observations"],
