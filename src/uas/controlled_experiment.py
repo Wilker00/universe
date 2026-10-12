@@ -23,7 +23,7 @@ from uas.controlled_replay import (
     select_controlled_episodes,
 )
 from uas.envs import TASKS, ContinuousWorldEnv
-from uas.experiment import _write_json_atomic
+from uas.experiment import _safe_replace, _write_json_atomic
 from uas.memory import MemoryStore, RetrievedEpisode
 from uas.training import evaluate_model, make_model, query_for_task
 
@@ -165,9 +165,53 @@ def run_controlled_experiment(
     rows: list[dict[str, Any]] = []
     results_path = output / "learning_curves.csv"
     expected_runs = len(selected_tasks) * len(selected_modes) * len(selected_seeds)
+    completed_runs: set[tuple[str, str, int]] = set()
+    if results_path.is_file():
+        try:
+            with results_path.open("r", encoding="utf-8") as handle:
+                reader = csv.DictReader(handle)
+                existing_rows = list(reader)
+                for r in existing_rows:
+                    if int(r["timestep"]) >= train_steps:
+                        completed_runs.add(
+                            (str(r["task_id"]), str(r["mode"]), int(r["seed"]))
+                        )
+                rows = [
+                    {
+                        "task_id": str(r["task_id"]),
+                        "mode": str(r["mode"]),
+                        "seed": int(r["seed"]),
+                        "timestep": int(r["timestep"]),
+                        "success_rate": float(r["success_rate"]),
+                        "mean_reward": float(r["mean_reward"]),
+                        "mean_steps": float(r["mean_steps"]),
+                        "mean_collisions": float(r["mean_collisions"]),
+                        "selected_episodes": int(r["selected_episodes"]),
+                        "selected_successful_episodes": int(
+                            r["selected_successful_episodes"]
+                        ),
+                        "prefilled_transitions": int(r["prefilled_transitions"]),
+                    }
+                    for r in existing_rows
+                    if (str(r["task_id"]), str(r["mode"]), int(r["seed"]))
+                    in completed_runs
+                ]
+                if completed_runs:
+                    print(
+                        f"Resuming experiment: found {len(completed_runs)} already completed runs."
+                    )
+        except Exception:
+            rows = []
+            completed_runs = set()
+
     for task_id in selected_tasks:
         for mode in selected_modes:
             for seed in selected_seeds:
+                if (task_id, mode, seed) in completed_runs:
+                    print(
+                        f"Skipping completed task='{task_id}', mode='{mode}', seed={seed}."
+                    )
+                    continue
                 plan = plans[(task_id, mode, seed)]
                 successful_episodes = sum(
                     item.record.success for item in plan.episodes
@@ -356,7 +400,7 @@ def _write_table_atomic(
             writer = csv.DictWriter(handle, fieldnames=columns)
             writer.writeheader()
             writer.writerows(rows)
-        os.replace(temporary_path, path)
+        _safe_replace(temporary_path, path)
     finally:
         temporary_path.unlink(missing_ok=True)
 
@@ -394,7 +438,7 @@ def _checkpoint(
         temporary_plot = output / ".success_rate.tmp.png"
         try:
             plot_controlled_results(rows, temporary_plot)
-            os.replace(temporary_plot, output / "success_rate.png")
+            _safe_replace(temporary_plot, output / "success_rate.png")
         finally:
             temporary_plot.unlink(missing_ok=True)
 
