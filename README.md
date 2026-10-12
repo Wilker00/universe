@@ -1,8 +1,8 @@
 # Universe Agent System
 
-The Universe Agent System (UAS) is a concept for an adaptive artificial intelligence framework in which multiple agents learn inside different simulated environments and contribute their experiences to a shared memory system. A central AI can retrieve and combine that knowledge to respond to unfamiliar scenarios.
+The Universe Agent System (UAS) is a research framework in which learning agents contribute experiences to shared memory. A retrieval and validation layer selects compatible knowledge that may help an agent adapt to an unfamiliar but related task.
 
-> **Project status:** Research concept and early design documentation. The repository does not yet contain a runnable implementation.
+> **Project status:** Early research prototype. UAS v0.1 contains a runnable continuous-control environment, structured episode memory, four transfer conditions, and a held-out-task evaluation pipeline. It does not yet support robotics or unrelated environment families.
 
 ![Universe Agent System concept diagram](Screenshot_2025-02-08_180627.png)
 
@@ -43,16 +43,41 @@ The Universe Agent System (UAS) is a concept for an adaptive artificial intellig
 
 ## Roadmap
 
-- Define a minimal agent and environment interface.
-- Build a small shared-memory prototype with semantic retrieval.
-- Demonstrate knowledge transfer between two simulated agents.
+- Validate the continuous-world environment and no-memory baseline.
+- Measure naive, similarity-based, and governed episode retrieval across multiple seeds.
+- Publish reproducible results, including unsuccessful and negative-transfer cases.
+- Add procedural skill checkpoints after the episode-memory baseline is understood.
+- Reproduce a useful result in a robot-manipulation simulator.
 - Add evaluation metrics for transfer quality, adaptability, and memory relevance.
 - Explore procedural environment generation and simulation-to-reality transfer.
+
+## Run UAS v0.1
+
+Python 3.10 or newer is required.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+uas check
+uas demo
+```
+
+`uas demo` is a fast pipeline check, not a research result. The full experiment first builds source-task memory and then compares all retrieval conditions:
+
+```powershell
+uas build-memory --reset
+uas experiment
+```
+
+See the [v0.1 experiment guide](docs/EXPERIMENT_V0_1.md) for the environment, memory schema, experimental conditions, outputs, and limitations.
 
 ## Project documents
 
 - [Research landscape and supporting evidence](docs/RESEARCH_LANDSCAPE.md) — related projects, papers, benchmarks, and tools organized around the UAS concept.
 - [How existing research fits UAS](docs/RESEARCH_TO_UAS_MAP.md) — maps prior work to each proposed UAS component, separates established evidence from open hypotheses, and defines a focused first experiment.
+- [UAS v0.1 governed-memory experiment](docs/EXPERIMENT_V0_1.md) — installation, architecture, comparison conditions, commands, outputs, and current limitations.
 - [Project description](Project%20Description%20Universe%20Agent%20System%20%28UAS%29%2016e3df2ced6d8028aaceed7a9f4923e9.md)
 - [Initial case study](Universe%20Agent%20System%2016e3df2ced6d80e49c50f6e40b90df82.md)
 - [Expanded case study](Universe%20Agent%20System%201963df2ced6d80cca9a3de1f01471efe.md)

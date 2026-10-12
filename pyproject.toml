@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "universe-agent-system"
+version = "0.1.0"
+description = "A research prototype for governed cross-agent memory and skill transfer"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "UAS contributors" }]
+dependencies = [
+    "gymnasium>=1.2,<2",
+    "matplotlib>=3.8,<4",
+    "numpy>=1.26,<3",
+    "stable-baselines3>=2.7,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+uas = "uas.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/uas"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
