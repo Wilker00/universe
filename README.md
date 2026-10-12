@@ -73,6 +73,8 @@ uas experiment
 
 See the [v0.1 experiment guide](docs/EXPERIMENT_V0_1.md) for the environment, memory schema, experimental conditions, outputs, and limitations.
 
+The first complete benchmark and an interpretation of its limitations are published in [results/v0.1](results/v0.1/README.md).
+
 ## Project documents
 
 - [Research landscape and supporting evidence](docs/RESEARCH_LANDSCAPE.md) — related projects, papers, benchmarks, and tools organized around the UAS concept.

@@ -20,6 +20,8 @@ build/
 
 # Generated UAS models, trajectories, and experiment results
 artifacts/
+# Published results contain reports, never policy checkpoints.
+results/**/models/
 
 # Local configuration and secrets
 .env

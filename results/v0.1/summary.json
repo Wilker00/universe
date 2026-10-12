@@ -1,0 +1,46 @@
+{
+  "no_memory": {
+    "seeds": 3,
+    "final_timestep": 5000,
+    "mean_success_rate": 1.0,
+    "mean_reward": 7.321760896027091,
+    "mean_collisions": 0.0,
+    "mean_best_success_rate": 1.0,
+    "success_threshold": 0.8,
+    "seeds_reaching_threshold": 3,
+    "mean_steps_to_threshold": 750.0
+  },
+  "naive": {
+    "seeds": 3,
+    "final_timestep": 5000,
+    "mean_success_rate": 1.0,
+    "mean_reward": 7.307741013849778,
+    "mean_collisions": 0.0,
+    "mean_best_success_rate": 1.0,
+    "success_threshold": 0.8,
+    "seeds_reaching_threshold": 3,
+    "mean_steps_to_threshold": 666.6666666666666
+  },
+  "similarity": {
+    "seeds": 3,
+    "final_timestep": 5000,
+    "mean_success_rate": 1.0,
+    "mean_reward": 7.31044532513867,
+    "mean_collisions": 0.0,
+    "mean_best_success_rate": 1.0,
+    "success_threshold": 0.8,
+    "seeds_reaching_threshold": 3,
+    "mean_steps_to_threshold": 500.0
+  },
+  "governed": {
+    "seeds": 3,
+    "final_timestep": 5000,
+    "mean_success_rate": 1.0,
+    "mean_reward": 7.33978278140724,
+    "mean_collisions": 0.0,
+    "mean_best_success_rate": 1.0,
+    "success_threshold": 0.8,
+    "seeds_reaching_threshold": 3,
+    "mean_steps_to_threshold": 833.3333333333334
+  }
+}
