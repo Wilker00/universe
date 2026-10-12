@@ -61,6 +61,24 @@ TASKS: dict[str, TaskSpec] = {
         goal=(0.89, 0.78),
         obstacle=(0.39, 0.00, 0.55, 0.59),
     ),
+    "hard_upper": TaskSpec(
+        task_id="hard_upper",
+        description="Reach a distant target through a narrow upper passage around a wide obstacle.",
+        start=(0.08, 0.08),
+        goal=(0.92, 0.92),
+        obstacle=(0.30, 0.00, 0.70, 0.80),
+        start_jitter=0.045,
+        goal_jitter=0.03,
+    ),
+    "hard_lower": TaskSpec(
+        task_id="hard_lower",
+        description="Reach a distant target through a narrow lower passage around a wide obstacle.",
+        start=(0.08, 0.92),
+        goal=(0.92, 0.08),
+        obstacle=(0.30, 0.20, 0.70, 1.00),
+        start_jitter=0.045,
+        goal_jitter=0.03,
+    ),
 }
 
 

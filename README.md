@@ -2,7 +2,7 @@
 
 The Universe Agent System (UAS) is a research framework in which learning agents contribute experiences to shared memory. A retrieval and validation layer selects compatible knowledge that may help an agent adapt to an unfamiliar but related task.
 
-> **Project status:** Early research prototype. UAS v0.1 contains a runnable continuous-control environment, structured episode memory, four transfer conditions, and a held-out-task evaluation pipeline. It does not yet support robotics or unrelated environment families.
+> **Project status:** Early research prototype. UAS v0.2 adds a controlled, equal-budget transfer benchmark with harder held-out tasks, five comparison conditions, ten-seed defaults, confidence intervals, and negative-transfer reporting. It does not yet support robotics or unrelated environment families.
 
 ![Universe Agent System concept diagram](Screenshot_2025-02-08_180627.png)
 
@@ -43,15 +43,15 @@ The Universe Agent System (UAS) is a research framework in which learning agents
 
 ## Roadmap
 
-- Validate the continuous-world environment and no-memory baseline.
-- Measure naive, similarity-based, and governed episode retrieval across multiple seeds.
-- Publish reproducible results, including unsuccessful and negative-transfer cases.
+- Preserve the published v0.1 result as the first pipeline baseline.
+- Run the controlled v0.2 benchmark with equal episode and replay-transition budgets.
+- Publish v0.2 results, including uncertainty and negative-transfer cases.
 - Add procedural skill checkpoints after the episode-memory baseline is understood.
 - Reproduce a useful result in a robot-manipulation simulator.
 - Add evaluation metrics for transfer quality, adaptability, and memory relevance.
 - Explore procedural environment generation and simulation-to-reality transfer.
 
-## Run UAS v0.1
+## Run UAS
 
 Python 3.10 or newer is required.
 
@@ -68,10 +68,10 @@ uas demo
 
 ```powershell
 uas build-memory --reset
-uas experiment
+uas experiment-v2
 ```
 
-See the [v0.1 experiment guide](docs/EXPERIMENT_V0_1.md) for the environment, memory schema, experimental conditions, outputs, and limitations.
+The v0.2 command runs two harder tasks, five conditions, and ten seeds by default. It uses equal replay budgets and does not save policy checkpoints unless `--save-models` is provided. See the [v0.2 controlled experiment guide](docs/EXPERIMENT_V0_2.md) for the protocol, commands, metrics, outputs, and limitations. The original `uas experiment` command remains available for reproducing v0.1.
 
 The first complete benchmark and an interpretation of its limitations are published in [results/v0.1](results/v0.1/README.md).
 
@@ -80,6 +80,7 @@ The first complete benchmark and an interpretation of its limitations are publis
 - [Research landscape and supporting evidence](docs/RESEARCH_LANDSCAPE.md) — related projects, papers, benchmarks, and tools organized around the UAS concept.
 - [How existing research fits UAS](docs/RESEARCH_TO_UAS_MAP.md) — maps prior work to each proposed UAS component, separates established evidence from open hypotheses, and defines a focused first experiment.
 - [UAS v0.1 governed-memory experiment](docs/EXPERIMENT_V0_1.md) — installation, architecture, comparison conditions, commands, outputs, and current limitations.
+- [UAS v0.2 controlled-memory experiment](docs/EXPERIMENT_V0_2.md) — equal-budget controls, harder held-out tasks, metrics, commands, and publication criteria.
 - [Project description](Project%20Description%20Universe%20Agent%20System%20%28UAS%29%2016e3df2ced6d8028aaceed7a9f4923e9.md)
 - [Initial case study](Universe%20Agent%20System%2016e3df2ced6d80e49c50f6e40b90df82.md)
 - [Expanded case study](Universe%20Agent%20System%201963df2ced6d80cca9a3de1f01471efe.md)

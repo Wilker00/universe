@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from uas.envs import ContinuousWorldEnv
 
@@ -52,3 +53,33 @@ def test_render_returns_rgb_frame() -> None:
 
     assert frame.shape == (512, 512, 3)
     assert frame.dtype == np.uint8
+
+
+@pytest.mark.parametrize(
+    ("task_id", "waypoints"),
+    [
+        ("hard_upper", ((0.25, 0.86), (0.75, 0.86))),
+        ("hard_lower", ((0.25, 0.14), (0.75, 0.14))),
+    ],
+)
+def test_hard_tasks_have_a_feasible_narrow_passage(
+    task_id: str, waypoints: tuple[tuple[float, float], ...]
+) -> None:
+    environment = ContinuousWorldEnv(task_id=task_id)
+    observation, _ = environment.reset(seed=0)
+    targets = [np.asarray(point, dtype=np.float32) for point in waypoints]
+    targets.append(observation[2:4].copy())
+    target_index = 0
+
+    for _ in range(environment.max_steps):
+        direction = targets[target_index] - observation[0:2]
+        if np.linalg.norm(direction) < 0.045 and target_index < len(targets) - 1:
+            target_index += 1
+            direction = targets[target_index] - observation[0:2]
+        action = direction / max(float(np.linalg.norm(direction)), 1e-6)
+        observation, _, terminated, truncated, info = environment.step(action)
+        if terminated or truncated:
+            break
+
+    assert terminated
+    assert info["success"]

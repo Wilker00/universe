@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "universe-agent-system"
-version = "0.1.0"
+version = "0.2.0"
 description = "A research prototype for governed cross-agent memory and skill transfer"
 readme = "README.md"
 license = "Apache-2.0"

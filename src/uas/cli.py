@@ -1,10 +1,15 @@
-"""Command-line interface for the UAS v0.1 experiment."""
+"""Command-line interface for UAS research experiments."""
 
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 
+from uas.controlled_experiment import (
+    DEFAULT_CONTROLLED_TASKS,
+    run_controlled_experiment,
+)
+from uas.controlled_replay import CONTROLLED_MODES
 from uas.envs import GYM_ENV_ID, TASKS, ContinuousWorldEnv
 from uas.experiment import VALID_MODES, build_source_memory, run_experiment
 from uas.memory import MemoryStore
@@ -14,7 +19,7 @@ from uas.training import safe_reset_memory
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="uas",
-        description="Universe Agent System v0.1 research prototype",
+        description="Universe Agent System research prototype",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -61,6 +66,43 @@ def build_parser() -> argparse.ArgumentParser:
     experiment.add_argument("--retrieval-limit", type=int, default=100)
     experiment.add_argument("--max-prefill-transitions", type=int, default=10_000)
 
+    controlled = subparsers.add_parser(
+        "experiment-v2",
+        help="Run the equal-budget v0.2 memory-transfer benchmark",
+    )
+    controlled.add_argument(
+        "--memory-dir", type=Path, default=Path("artifacts/memory")
+    )
+    controlled.add_argument(
+        "--output-dir", type=Path, default=Path("artifacts/v0.2-results")
+    )
+    controlled.add_argument(
+        "--tasks",
+        nargs="+",
+        choices=sorted(TASKS),
+        default=list(DEFAULT_CONTROLLED_TASKS),
+    )
+    controlled.add_argument(
+        "--modes",
+        nargs="+",
+        choices=CONTROLLED_MODES,
+        default=list(CONTROLLED_MODES),
+    )
+    controlled.add_argument(
+        "--seeds", nargs="+", type=int, default=list(range(10))
+    )
+    controlled.add_argument("--train-steps", type=int, default=3_000)
+    controlled.add_argument("--eval-interval", type=int, default=250)
+    controlled.add_argument("--eval-episodes", type=int, default=25)
+    controlled.add_argument("--episode-budget", type=int, default=12)
+    controlled.add_argument("--replay-transitions", type=int, default=200)
+    controlled.add_argument("--learning-starts", type=int, default=100)
+    controlled.add_argument(
+        "--save-models",
+        action="store_true",
+        help="Save local policy checkpoints (disabled by default)",
+    )
+
     inspect = subparsers.add_parser("inspect-memory", help="Show memory contents")
     inspect.add_argument("--memory-dir", type=Path, default=Path("artifacts/memory"))
 
@@ -104,6 +146,25 @@ def main(argv: list[str] | None = None) -> None:
             evaluation_episodes=args.eval_episodes,
             retrieval_limit=args.retrieval_limit,
             max_prefill_transitions=args.max_prefill_transitions,
+        )
+    elif args.command == "experiment-v2":
+        if not (args.memory_dir / "memory.sqlite3").is_file():
+            raise SystemExit(
+                f"No memory database at {args.memory_dir}. Run 'uas build-memory' first."
+            )
+        run_controlled_experiment(
+            args.memory_dir,
+            args.output_dir,
+            task_ids=args.tasks,
+            modes=args.modes,
+            seeds=args.seeds,
+            train_steps=args.train_steps,
+            evaluation_interval=args.eval_interval,
+            evaluation_episodes=args.eval_episodes,
+            episode_budget=args.episode_budget,
+            replay_transition_budget=args.replay_transitions,
+            learning_starts=args.learning_starts,
+            save_models=args.save_models,
         )
     elif args.command == "inspect-memory":
         store = MemoryStore(args.memory_dir)
