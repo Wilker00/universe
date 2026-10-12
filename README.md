@@ -73,7 +73,9 @@ uas experiment-v2
 
 The v0.2 command runs two harder tasks, five conditions, and ten seeds by default. It uses equal replay budgets and does not save policy checkpoints unless `--save-models` is provided. See the [v0.2 controlled experiment guide](docs/EXPERIMENT_V0_2.md) for the protocol, commands, metrics, outputs, and limitations. The original `uas experiment` command remains available for reproducing v0.1.
 
-The first complete benchmark and an interpretation of its limitations are published in [results/v0.1](results/v0.1/README.md).
+Published benchmark results:
+- [v0.1 held-out benchmark](results/v0.1/README.md) — initial pipeline verification across 4 conditions and 3 seeds.
+- [v0.2 controlled benchmark](results/v0.2/README.md) — 100-run, 10-seed equalized-budget experiment across 5 conditions and harder tasks.
 
 ## Project documents
 

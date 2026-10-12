@@ -1,0 +1,42 @@
+{
+  "protocol_version": "0.2",
+  "tasks": [
+    "hard_upper",
+    "hard_lower"
+  ],
+  "modes": [
+    "no_memory",
+    "random",
+    "naive",
+    "similarity",
+    "governed"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "train_steps": 3000,
+  "evaluation_interval": 250,
+  "evaluation_episodes": 25,
+  "success_threshold": 0.8,
+  "episode_budget_per_memory_run": 12,
+  "replay_transition_budget_per_memory_run": 200,
+  "replay_sampling": "episode-balanced-without-replacement",
+  "learning_starts_all_modes": 100,
+  "save_policy_checkpoints": false,
+  "memory_episodes": 48,
+  "versions": {
+    "universe-agent-system": "0.2.0",
+    "gymnasium": "1.4.0",
+    "stable-baselines3": "2.9.0",
+    "numpy": "2.5.3"
+  }
+}

@@ -1,0 +1,810 @@
+{
+  "success_threshold": 0.8,
+  "confidence_interval": "mean plus/minus 1.96 standard errors",
+  "negative_transfer_definition": "A matched task/seed run whose normalized success AUC is below the no_memory run",
+  "tasks": {
+    "hard_lower": {
+      "governed": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.834126144575183,
+          "ci95_low": 8.812121278275681,
+          "ci95_high": 8.856131010874686,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 0.0,
+          "ci95_low": 0.0,
+          "ci95_high": 0.0,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.7470000000000001,
+          "ci95_low": 0.7004729614785098,
+          "ci95_high": 0.7935270385214904,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 1000.0
+        },
+        "sustained_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 1425.0
+        }
+      },
+      "naive": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 0.9960000000000001,
+          "ci95_low": 0.9881600000000001,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.783231701540206,
+          "ci95_low": 8.64744168276403,
+          "ci95_high": 8.919021720316382,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 0.272,
+          "ci95_low": 0.0,
+          "ci95_high": 0.8051200000000001,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.7835000000000001,
+          "ci95_low": 0.7326628808210011,
+          "ci95_high": 0.8343371191789991,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 875.0
+        },
+        "sustained_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 1275.0
+        }
+      },
+      "no_memory": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 0.9640000000000001,
+          "ci95_low": 0.8934400000000001,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.665793366117631,
+          "ci95_low": 8.335156247367843,
+          "ci95_high": 8.99643048486742,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 0.0,
+          "ci95_low": 0.0,
+          "ci95_high": 0.0,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 0.9640000000000001,
+          "ci95_low": 0.8934400000000001,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.6621666666666666,
+          "ci95_low": 0.6048492062885451,
+          "ci95_high": 0.719484127044788,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 9,
+          "mean_steps": 1694.4444444444443
+        },
+        "sustained_threshold": {
+          "runs_reaching": 9,
+          "mean_steps": 1888.888888888889
+        }
+      },
+      "random": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.815306542858336,
+          "ci95_low": 8.731520400343502,
+          "ci95_high": 8.89909268537317,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 0.184,
+          "ci95_low": 0.0,
+          "ci95_high": 0.54464,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.7983333333333333,
+          "ci95_low": 0.7561158879895181,
+          "ci95_high": 0.8405507786771486,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 950.0
+        },
+        "sustained_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 1375.0
+        }
+      },
+      "similarity": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 0.9560000000000001,
+          "ci95_low": 0.8915083550631041,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.677274488862611,
+          "ci95_low": 8.426821563075816,
+          "ci95_high": 8.927727414649407,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 0.0,
+          "ci95_low": 0.0,
+          "ci95_high": 0.0,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 0.968,
+          "ci95_low": 0.90528,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.7231666666666665,
+          "ci95_low": 0.669559592829046,
+          "ci95_high": 0.776773740504287,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 9,
+          "mean_steps": 722.2222222222222
+        },
+        "sustained_threshold": {
+          "runs_reaching": 9,
+          "mean_steps": 1777.7777777777778
+        }
+      }
+    },
+    "hard_upper": {
+      "governed": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 0.9800000000000001,
+          "ci95_low": 0.9408000000000001,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.376049966291195,
+          "ci95_low": 7.450454295413124,
+          "ci95_high": 9.301645637169266,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 1.7,
+          "ci95_low": 0.0,
+          "ci95_high": 5.032,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.7405,
+          "ci95_low": 0.6748082258564784,
+          "ci95_high": 0.8061917741435217,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 775.0
+        },
+        "sustained_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 1750.0
+        }
+      },
+      "naive": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.852099929723446,
+          "ci95_low": 8.826122438091895,
+          "ci95_high": 8.878077421354996,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 0.0,
+          "ci95_low": 0.0,
+          "ci95_high": 0.0,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.8183333333333334,
+          "ci95_low": 0.789871852324177,
+          "ci95_high": 0.8467948143424897,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 575.0
+        },
+        "sustained_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 1625.0
+        }
+      },
+      "no_memory": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 0.9199999999999999,
+          "ci95_low": 0.812885207993169,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.542245171230142,
+          "ci95_low": 8.170349301355966,
+          "ci95_high": 8.914141041104319,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 0.0,
+          "ci95_low": 0.0,
+          "ci95_high": 0.0,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 0.952,
+          "ci95_low": 0.85792,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.6629999999999999,
+          "ci95_low": 0.539041776531639,
+          "ci95_high": 0.7869582234683609,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 9,
+          "mean_steps": 1527.7777777777778
+        },
+        "sustained_threshold": {
+          "runs_reaching": 8,
+          "mean_steps": 1906.25
+        }
+      },
+      "random": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.845644636987155,
+          "ci95_low": 8.819057440599979,
+          "ci95_high": 8.87223183337433,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 0.0,
+          "ci95_low": 0.0,
+          "ci95_high": 0.0,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.7673333333333334,
+          "ci95_low": 0.7275323963135305,
+          "ci95_high": 0.8071342703531363,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 725.0
+        },
+        "sustained_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 1550.0
+        }
+      },
+      "similarity": {
+        "runs": 10,
+        "complete_runs": 10,
+        "final_timestep": 3000,
+        "final_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "final_reward": {
+          "mean": 8.843214173282835,
+          "ci95_low": 8.823046621338248,
+          "ci95_high": 8.863381725227422,
+          "samples": 10
+        },
+        "final_collisions": {
+          "mean": 0.0,
+          "ci95_low": 0.0,
+          "ci95_high": 0.0,
+          "samples": 10
+        },
+        "best_success_rate": {
+          "mean": 1.0,
+          "ci95_low": 1.0,
+          "ci95_high": 1.0,
+          "samples": 10
+        },
+        "normalized_success_auc": {
+          "mean": 0.7719999999999999,
+          "ci95_low": 0.7386657691972669,
+          "ci95_high": 0.8053342308027329,
+          "samples": 10
+        },
+        "first_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 750.0
+        },
+        "sustained_threshold": {
+          "runs_reaching": 10,
+          "mean_steps": 1725.0
+        }
+      }
+    }
+  },
+  "overall": {
+    "governed": {
+      "runs": 20,
+      "complete_runs": 20,
+      "final_timestep": 3000,
+      "final_success_rate": {
+        "mean": 0.99,
+        "ci95_low": 0.9704,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "final_reward": {
+        "mean": 8.605088055433189,
+        "ci95_low": 8.14288643688278,
+        "ci95_high": 9.067289673983598,
+        "samples": 20
+      },
+      "final_collisions": {
+        "mean": 0.85,
+        "ci95_low": 0.0,
+        "ci95_high": 2.5159999999999996,
+        "samples": 20
+      },
+      "best_success_rate": {
+        "mean": 1.0,
+        "ci95_low": 1.0,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "normalized_success_auc": {
+        "mean": 0.74375,
+        "ci95_low": 0.7045465078309903,
+        "ci95_high": 0.7829534921690098,
+        "samples": 20
+      },
+      "first_threshold": {
+        "runs_reaching": 20,
+        "mean_steps": 887.5
+      },
+      "sustained_threshold": {
+        "runs_reaching": 20,
+        "mean_steps": 1587.5
+      }
+    },
+    "naive": {
+      "runs": 20,
+      "complete_runs": 20,
+      "final_timestep": 3000,
+      "final_success_rate": {
+        "mean": 0.998,
+        "ci95_low": 0.99408,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "final_reward": {
+        "mean": 8.817665815631825,
+        "ci95_low": 8.748624663376441,
+        "ci95_high": 8.886706967887209,
+        "samples": 20
+      },
+      "final_collisions": {
+        "mean": 0.136,
+        "ci95_low": 0.0,
+        "ci95_high": 0.40256,
+        "samples": 20
+      },
+      "best_success_rate": {
+        "mean": 1.0,
+        "ci95_low": 1.0,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "normalized_success_auc": {
+        "mean": 0.8009166666666667,
+        "ci95_low": 0.7715009345210815,
+        "ci95_high": 0.830332398812252,
+        "samples": 20
+      },
+      "first_threshold": {
+        "runs_reaching": 20,
+        "mean_steps": 725.0
+      },
+      "sustained_threshold": {
+        "runs_reaching": 20,
+        "mean_steps": 1450.0
+      }
+    },
+    "no_memory": {
+      "runs": 20,
+      "complete_runs": 20,
+      "final_timestep": 3000,
+      "final_success_rate": {
+        "mean": 0.942,
+        "ci95_low": 0.8787982971581836,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "final_reward": {
+        "mean": 8.604019268673886,
+        "ci95_low": 8.36025674550571,
+        "ci95_high": 8.847781791842062,
+        "samples": 20
+      },
+      "final_collisions": {
+        "mean": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
+        "samples": 20
+      },
+      "best_success_rate": {
+        "mean": 0.958,
+        "ci95_low": 0.9007047271170051,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "normalized_success_auc": {
+        "mean": 0.6625833333333333,
+        "ci95_low": 0.5961201013618623,
+        "ci95_high": 0.7290465653048043,
+        "samples": 20
+      },
+      "first_threshold": {
+        "runs_reaching": 18,
+        "mean_steps": 1611.111111111111
+      },
+      "sustained_threshold": {
+        "runs_reaching": 17,
+        "mean_steps": 1897.0588235294117
+      }
+    },
+    "random": {
+      "runs": 20,
+      "complete_runs": 20,
+      "final_timestep": 3000,
+      "final_success_rate": {
+        "mean": 1.0,
+        "ci95_low": 1.0,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "final_reward": {
+        "mean": 8.830475589922745,
+        "ci95_low": 8.787155825855043,
+        "ci95_high": 8.873795353990447,
+        "samples": 20
+      },
+      "final_collisions": {
+        "mean": 0.092,
+        "ci95_low": 0.0,
+        "ci95_high": 0.27232,
+        "samples": 20
+      },
+      "best_success_rate": {
+        "mean": 1.0,
+        "ci95_low": 1.0,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "normalized_success_auc": {
+        "mean": 0.7828333333333333,
+        "ci95_low": 0.7537491839555495,
+        "ci95_high": 0.8119174827111171,
+        "samples": 20
+      },
+      "first_threshold": {
+        "runs_reaching": 20,
+        "mean_steps": 837.5
+      },
+      "sustained_threshold": {
+        "runs_reaching": 20,
+        "mean_steps": 1462.5
+      }
+    },
+    "similarity": {
+      "runs": 20,
+      "complete_runs": 20,
+      "final_timestep": 3000,
+      "final_success_rate": {
+        "mean": 0.9780000000000001,
+        "ci95_low": 0.9450921465140519,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "final_reward": {
+        "mean": 8.760244331072723,
+        "ci95_low": 8.632398649849303,
+        "ci95_high": 8.888090012296143,
+        "samples": 20
+      },
+      "final_collisions": {
+        "mean": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
+        "samples": 20
+      },
+      "best_success_rate": {
+        "mean": 0.984,
+        "ci95_low": 0.95264,
+        "ci95_high": 1.0,
+        "samples": 20
+      },
+      "normalized_success_auc": {
+        "mean": 0.7475833333333333,
+        "ci95_low": 0.7149592685688931,
+        "ci95_high": 0.7802073980977734,
+        "samples": 20
+      },
+      "first_threshold": {
+        "runs_reaching": 19,
+        "mean_steps": 736.8421052631579
+      },
+      "sustained_threshold": {
+        "runs_reaching": 19,
+        "mean_steps": 1750.0
+      }
+    }
+  },
+  "comparisons_vs_no_memory": [
+    {
+      "task_id": "hard_lower",
+      "mode": "governed",
+      "paired_runs": 10,
+      "mean_auc_delta_vs_no_memory": 0.08483333333333333,
+      "auc_delta_ci95_low": 0.026828251861593176,
+      "auc_delta_ci95_high": 0.14283841480507348,
+      "negative_transfer_rate": 0.1,
+      "mean_final_success_delta": 0.036,
+      "mean_first_threshold_step_delta": -638.8888888888889,
+      "mean_sustained_threshold_step_delta": -527.7777777777778
+    },
+    {
+      "task_id": "hard_lower",
+      "mode": "naive",
+      "paired_runs": 10,
+      "mean_auc_delta_vs_no_memory": 0.12133333333333333,
+      "auc_delta_ci95_low": 0.03930335037768655,
+      "auc_delta_ci95_high": 0.20336331628898013,
+      "negative_transfer_rate": 0.2,
+      "mean_final_success_delta": 0.031999999999999994,
+      "mean_first_threshold_step_delta": -805.5555555555555,
+      "mean_sustained_threshold_step_delta": -555.5555555555555
+    },
+    {
+      "task_id": "hard_lower",
+      "mode": "random",
+      "paired_runs": 10,
+      "mean_auc_delta_vs_no_memory": 0.13616666666666663,
+      "auc_delta_ci95_low": 0.07142391185012698,
+      "auc_delta_ci95_high": 0.20090942148320629,
+      "negative_transfer_rate": 0.0,
+      "mean_final_success_delta": 0.036,
+      "mean_first_threshold_step_delta": -888.8888888888889,
+      "mean_sustained_threshold_step_delta": -611.1111111111111
+    },
+    {
+      "task_id": "hard_lower",
+      "mode": "similarity",
+      "paired_runs": 10,
+      "mean_auc_delta_vs_no_memory": 0.060999999999999985,
+      "auc_delta_ci95_low": -0.03848321538435456,
+      "auc_delta_ci95_high": 0.16048321538435453,
+      "negative_transfer_rate": 0.2,
+      "mean_final_success_delta": -0.007999999999999997,
+      "mean_first_threshold_step_delta": -1062.5,
+      "mean_sustained_threshold_step_delta": -187.5
+    },
+    {
+      "task_id": "hard_upper",
+      "mode": "governed",
+      "paired_runs": 10,
+      "mean_auc_delta_vs_no_memory": 0.07750000000000001,
+      "auc_delta_ci95_low": -0.05886545569231541,
+      "auc_delta_ci95_high": 0.21386545569231544,
+      "negative_transfer_rate": 0.4,
+      "mean_final_success_delta": 0.06,
+      "mean_first_threshold_step_delta": -750.0,
+      "mean_sustained_threshold_step_delta": -31.25
+    },
+    {
+      "task_id": "hard_upper",
+      "mode": "naive",
+      "paired_runs": 10,
+      "mean_auc_delta_vs_no_memory": 0.15533333333333335,
+      "auc_delta_ci95_low": 0.025350098402966426,
+      "auc_delta_ci95_high": 0.2853165682637003,
+      "negative_transfer_rate": 0.2,
+      "mean_final_success_delta": 0.07999999999999999,
+      "mean_first_threshold_step_delta": -916.6666666666666,
+      "mean_sustained_threshold_step_delta": -312.5
+    },
+    {
+      "task_id": "hard_upper",
+      "mode": "random",
+      "paired_runs": 10,
+      "mean_auc_delta_vs_no_memory": 0.10433333333333335,
+      "auc_delta_ci95_low": -0.013500545213260093,
+      "auc_delta_ci95_high": 0.22216721187992677,
+      "negative_transfer_rate": 0.3,
+      "mean_final_success_delta": 0.07999999999999999,
+      "mean_first_threshold_step_delta": -777.7777777777778,
+      "mean_sustained_threshold_step_delta": -218.75
+    },
+    {
+      "task_id": "hard_upper",
+      "mode": "similarity",
+      "paired_runs": 10,
+      "mean_auc_delta_vs_no_memory": 0.10899999999999999,
+      "auc_delta_ci95_low": -0.0018488888888889,
+      "auc_delta_ci95_high": 0.21984888888888887,
+      "negative_transfer_rate": 0.3,
+      "mean_final_success_delta": 0.07999999999999999,
+      "mean_first_threshold_step_delta": -861.1111111111111,
+      "mean_sustained_threshold_step_delta": -250.0
+    },
+    {
+      "task_id": "__overall__",
+      "mode": "governed",
+      "paired_runs": 20,
+      "mean_auc_delta_vs_no_memory": 0.08116666666666665,
+      "auc_delta_ci95_low": 0.009029290559831815,
+      "auc_delta_ci95_high": 0.1533040427735015,
+      "negative_transfer_rate": 0.25,
+      "mean_final_success_delta": 0.048,
+      "mean_first_threshold_step_delta": -694.4444444444445,
+      "mean_sustained_threshold_step_delta": -294.11764705882354
+    },
+    {
+      "task_id": "__overall__",
+      "mode": "naive",
+      "paired_runs": 20,
+      "mean_auc_delta_vs_no_memory": 0.13833333333333334,
+      "auc_delta_ci95_low": 0.06314208944220773,
+      "auc_delta_ci95_high": 0.21352457722445894,
+      "negative_transfer_rate": 0.2,
+      "mean_final_success_delta": 0.055999999999999994,
+      "mean_first_threshold_step_delta": -861.1111111111111,
+      "mean_sustained_threshold_step_delta": -441.1764705882353
+    },
+    {
+      "task_id": "__overall__",
+      "mode": "random",
+      "paired_runs": 20,
+      "mean_auc_delta_vs_no_memory": 0.12024999999999994,
+      "auc_delta_ci95_low": 0.054428373188287416,
+      "auc_delta_ci95_high": 0.18607162681171246,
+      "negative_transfer_rate": 0.15,
+      "mean_final_success_delta": 0.057999999999999996,
+      "mean_first_threshold_step_delta": -833.3333333333334,
+      "mean_sustained_threshold_step_delta": -426.47058823529414
+    },
+    {
+      "task_id": "__overall__",
+      "mode": "similarity",
+      "paired_runs": 20,
+      "mean_auc_delta_vs_no_memory": 0.08499999999999999,
+      "auc_delta_ci95_low": 0.011715227402025435,
+      "auc_delta_ci95_high": 0.15828477259797455,
+      "negative_transfer_rate": 0.25,
+      "mean_final_success_delta": 0.036,
+      "mean_first_threshold_step_delta": -955.8823529411765,
+      "mean_sustained_threshold_step_delta": -218.75
+    }
+  ],
+  "_checkpoint": {
+    "evaluation_rows": 1300,
+    "completed_runs": 100,
+    "expected_runs": 100,
+    "complete": true
+  }
+}
