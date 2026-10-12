@@ -88,4 +88,4 @@ Ideas, architecture proposals, experiments, and prototype implementations are we
 
 ## License
 
-No license has been selected yet. The contents are publicly viewable, but reuse rights remain reserved until a license is added.
+Licensed under the [Apache License 2.0](LICENSE). You may use, modify, and distribute the project under its terms.
