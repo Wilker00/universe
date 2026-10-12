@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import defaultdict
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -99,7 +100,30 @@ def run_experiment(
     store = MemoryStore(memory_directory)
     query = query_for_task(task_id)
     rows: list[dict[str, Any]] = []
-    retrieval_manifest: dict[str, list[dict[str, Any]]] = {}
+    results_path = output / "learning_curves.csv"
+    expected_runs = len(selected_modes) * len(selected_seeds)
+
+    retrieved_by_mode = {
+        mode: store.retrieve(query, mode=mode, limit=retrieval_limit)
+        for mode in selected_modes
+    }
+    retrieval_manifest = {
+        mode: [
+            {
+                "episode_id": item.record.episode_id,
+                "source_task": item.record.task_id,
+                "agent_id": item.record.agent_id,
+                "success": item.record.success,
+                "normalized_score": item.record.normalized_score,
+                "similarity": item.similarity,
+                "retrieval_score": item.retrieval_score,
+                "steps": item.record.steps,
+                "policy_reference": item.record.policy_reference,
+            }
+            for item in retrieved
+        ]
+        for mode, retrieved in retrieved_by_mode.items()
+    }
 
     configuration = {
         "task_id": task_id,
@@ -118,26 +142,13 @@ def run_experiment(
             "numpy": _package_version("numpy"),
         },
     }
-    (output / "run_config.json").write_text(
-        json.dumps(configuration, indent=2) + "\n", encoding="utf-8"
+    _write_json_atomic(output / "run_config.json", configuration)
+    _write_json_atomic(
+        output / "retrieval_manifest.json", retrieval_manifest
     )
 
     for mode in selected_modes:
-        retrieved = store.retrieve(query, mode=mode, limit=retrieval_limit)
-        retrieval_manifest[mode] = [
-            {
-                "episode_id": item.record.episode_id,
-                "source_task": item.record.task_id,
-                "agent_id": item.record.agent_id,
-                "success": item.record.success,
-                "normalized_score": item.record.normalized_score,
-                "similarity": item.similarity,
-                "retrieval_score": item.retrieval_score,
-                "steps": item.record.steps,
-                "policy_reference": item.record.policy_reference,
-            }
-            for item in retrieved
-        ]
+        retrieved = retrieved_by_mode[mode]
         for seed in selected_seeds:
             print(
                 f"Running mode='{mode}', seed={seed}, "
@@ -167,6 +178,12 @@ def run_experiment(
                     retrieved_episodes=len(retrieved),
                     prefilled_transitions=prefilled,
                 )
+                _checkpoint_results(
+                    output,
+                    rows,
+                    expected_runs=expected_runs,
+                    train_steps=train_steps,
+                )
                 completed = 0
                 while completed < train_steps:
                     chunk = min(evaluation_interval, train_steps - completed)
@@ -187,20 +204,30 @@ def run_experiment(
                         retrieved_episodes=len(retrieved),
                         prefilled_transitions=prefilled,
                     )
+                    _checkpoint_results(
+                        output,
+                        rows,
+                        expected_runs=expected_runs,
+                        train_steps=train_steps,
+                    )
                 model.save(model_directory / f"{task_id}_{mode}_seed_{seed}")
+                _checkpoint_results(
+                    output,
+                    rows,
+                    expected_runs=expected_runs,
+                    train_steps=train_steps,
+                    include_plot=True,
+                )
             finally:
                 environment.close()
 
-    results_path = output / "learning_curves.csv"
-    _write_csv(results_path, rows)
-    summary = summarize_results(rows)
-    (output / "summary.json").write_text(
-        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    _checkpoint_results(
+        output,
+        rows,
+        expected_runs=expected_runs,
+        train_steps=train_steps,
+        include_plot=True,
     )
-    (output / "retrieval_manifest.json").write_text(
-        json.dumps(retrieval_manifest, indent=2) + "\n", encoding="utf-8"
-    )
-    plot_results(rows, output / "success_rate.png")
     print(f"Wrote experiment results to {output.resolve()}")
     return results_path
 
@@ -246,10 +273,58 @@ def _append_evaluation(
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     if not rows:
         raise ValueError("No experiment rows were produced")
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
+    temporary_path = path.with_name(f".{path.name}.tmp")
+    try:
+        with temporary_path.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def _write_json_atomic(path: Path, value: Any) -> None:
+    temporary_path = path.with_name(f".{path.name}.tmp")
+    try:
+        temporary_path.write_text(
+            json.dumps(value, indent=2) + "\n", encoding="utf-8"
+        )
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def _checkpoint_results(
+    output: Path,
+    rows: list[dict[str, Any]],
+    *,
+    expected_runs: int,
+    train_steps: int,
+    include_plot: bool = False,
+) -> None:
+    """Atomically persist progress so an interrupted run retains evaluations."""
+    _write_csv(output / "learning_curves.csv", rows)
+    completed_runs = {
+        (str(row["mode"]), int(row["seed"]))
+        for row in rows
+        if int(row["timestep"]) >= train_steps
+    }
+    summary = summarize_results(rows)
+    summary["_checkpoint"] = {
+        "evaluation_rows": len(rows),
+        "completed_runs": len(completed_runs),
+        "expected_runs": expected_runs,
+        "complete": len(completed_runs) == expected_runs,
+    }
+    _write_json_atomic(output / "summary.json", summary)
+    if include_plot:
+        temporary_plot = output / ".success_rate.tmp.png"
+        try:
+            plot_results(rows, temporary_plot)
+            os.replace(temporary_plot, output / "success_rate.png")
+        finally:
+            temporary_plot.unlink(missing_ok=True)
 
 
 def summarize_results(rows: list[dict[str, Any]]) -> dict[str, Any]:

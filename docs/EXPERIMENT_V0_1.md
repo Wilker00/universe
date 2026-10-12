@@ -90,6 +90,8 @@ The default experiment evaluates all four modes over three seeds. Generated arti
 - `success_rate.png` with mean learning curves; and
 - trained model checkpoints.
 
+The CSV and summary are replaced atomically after every evaluation. The chart is refreshed after every completed mode/seed run, while the configuration and retrieval manifest are written before training starts. The `_checkpoint` object in `summary.json` records completed and expected runs, so partial output cannot be mistaken for a finished benchmark. An interrupted experiment preserves its completed evaluations, although automatic training resume is not implemented yet.
+
 For a fast pipeline check that is not scientifically meaningful:
 
 ```powershell
