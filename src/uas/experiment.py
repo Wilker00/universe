@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import time
 from collections import defaultdict
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -270,6 +271,19 @@ def _append_evaluation(
     )
 
 
+def _safe_replace(
+    source: Path, target: Path, *, retries: int = 20, delay: float = 0.05
+) -> None:
+    for attempt in range(retries):
+        try:
+            os.replace(source, target)
+            return
+        except PermissionError:
+            if attempt == retries - 1:
+                raise
+            time.sleep(delay * (attempt + 1))
+
+
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     if not rows:
         raise ValueError("No experiment rows were produced")
@@ -279,7 +293,7 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
             writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
             writer.writeheader()
             writer.writerows(rows)
-        os.replace(temporary_path, path)
+        _safe_replace(temporary_path, path)
     finally:
         temporary_path.unlink(missing_ok=True)
 
@@ -290,7 +304,7 @@ def _write_json_atomic(path: Path, value: Any) -> None:
         temporary_path.write_text(
             json.dumps(value, indent=2) + "\n", encoding="utf-8"
         )
-        os.replace(temporary_path, path)
+        _safe_replace(temporary_path, path)
     finally:
         temporary_path.unlink(missing_ok=True)
 
@@ -322,7 +336,7 @@ def _checkpoint_results(
         temporary_plot = output / ".success_rate.tmp.png"
         try:
             plot_results(rows, temporary_plot)
-            os.replace(temporary_plot, output / "success_rate.png")
+            _safe_replace(temporary_plot, output / "success_rate.png")
         finally:
             temporary_plot.unlink(missing_ok=True)
 
