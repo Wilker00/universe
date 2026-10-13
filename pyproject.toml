@@ -20,6 +20,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10"]
+robotics = ["panda-gym>=3.0", "pybullet>=3.2"]
+
 
 [project.scripts]
 uas = "uas.cli:main"

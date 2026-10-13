@@ -12,7 +12,9 @@ from uas.adapters.multiverse import (
 )
 from uas.adapters.robotics import (
     ROBOT_EMBODIMENTS,
+    panda_gym_to_uas_episode,
     robotics_to_uas_episode,
+    uas_episode_to_panda_transitions,
 )
 
 __all__ = [
@@ -20,9 +22,11 @@ __all__ = [
     "ROBOT_EMBODIMENTS",
     "gymnasium_to_uas_episode",
     "multiverse_to_uas_episode",
+    "panda_gym_to_uas_episode",
     "robotics_to_uas_episode",
     "uas_episode_to_multiverse_events",
     "uas_episode_to_multiverse_transitions",
+    "uas_episode_to_panda_transitions",
     "uas_episode_to_trajectory",
 ]
 

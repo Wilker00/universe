@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import time
 from contextlib import contextmanager
@@ -68,6 +69,7 @@ class MemoryBridge:
                     observation_schema TEXT NOT NULL,
                     action_schema TEXT NOT NULL,
                     action_type TEXT NOT NULL,
+                    task_description TEXT NOT NULL DEFAULT '',
                     success INTEGER NOT NULL,
                     total_reward REAL NOT NULL,
                     steps INTEGER NOT NULL,
@@ -77,6 +79,14 @@ class MemoryBridge:
                 )
                 """
             )
+            # Migration check for existing databases
+            try:
+                conn.execute(
+                    "ALTER TABLE episodes ADD COLUMN task_description TEXT NOT NULL DEFAULT ''"
+                )
+            except sqlite3.OperationalError:
+                pass
+
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS episode_tags (
@@ -122,9 +132,9 @@ class MemoryBridge:
                 """
                 INSERT OR REPLACE INTO episodes (
                     episode_id, task, embodiment, framework, observation_schema,
-                    action_schema, action_type, success, total_reward, steps,
+                    action_schema, action_type, task_description, success, total_reward, steps,
                     created_at, metadata_json, trajectory_file
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     episode.episode_id,
@@ -134,6 +144,7 @@ class MemoryBridge:
                     episode.observation_schema,
                     episode.action_schema,
                     episode.action_type,
+                    episode.task_description,
                     int(episode.success),
                     float(episode.total_reward),
                     episode.steps,
@@ -216,6 +227,11 @@ class MemoryBridge:
                 continue
 
             with np.load(traj_path) as data:
+                task_desc = (
+                    str(row["task_description"])
+                    if "task_description" in row.keys() and row["task_description"]
+                    else str(row["task"])
+                )
                 episode = Episode(
                     episode_id=row["episode_id"],
                     task=row["task"],
@@ -224,6 +240,7 @@ class MemoryBridge:
                     observation_schema=row["observation_schema"],
                     action_schema=row["action_schema"],
                     action_type=row["action_type"],
+                    task_description=task_desc,
                     success=bool(row["success"]),
                     total_reward=float(row["total_reward"]),
                     observations=data["observations"],
@@ -250,6 +267,11 @@ class MemoryBridge:
         if not traj_path.is_file():
             return None
 
+        task_desc = (
+            str(row["task_description"])
+            if "task_description" in row.keys() and row["task_description"]
+            else str(row["task"])
+        )
         with np.load(traj_path) as data:
             return Episode(
                 episode_id=row["episode_id"],
@@ -259,6 +281,7 @@ class MemoryBridge:
                 observation_schema=row["observation_schema"],
                 action_schema=row["action_schema"],
                 action_type=row["action_type"],
+                task_description=task_desc,
                 success=bool(row["success"]),
                 total_reward=float(row["total_reward"]),
                 observations=data["observations"],
@@ -269,6 +292,40 @@ class MemoryBridge:
                 metadata=json.loads(row["metadata_json"]),
                 created_at=row["created_at"],
             )
+
+    def search_semantic(
+        self,
+        query_text: str,
+        limit: int = 10,
+        min_similarity: float = 0.05,
+    ) -> list[tuple[Episode, float]]:
+        """Search episodes using natural language text similarity over tasks, descriptions, and tags."""
+        all_episodes = self.search(limit=1000)
+        scored: list[tuple[Episode, float]] = []
+
+        query_tokens = set(re.findall(r"\w+", query_text.lower()))
+        if not query_tokens:
+            return []
+
+        for ep in all_episodes:
+            tags = ep.metadata.get("tags", [])
+            tag_str = " ".join(tags) if isinstance(tags, list) else str(tags)
+            doc_text = f"{ep.task_description} {ep.task} {tag_str}".lower()
+            doc_tokens = set(re.findall(r"\w+", doc_text))
+
+            overlap = len(query_tokens & doc_tokens)
+            union = len(query_tokens | doc_tokens)
+            jaccard = float(overlap / union) if union > 0 else 0.0
+
+            # Substring / exact phrase match bonus
+            substring_bonus = 0.4 if query_text.lower() in doc_text else 0.0
+            similarity = min(1.0, jaccard + substring_bonus)
+
+            if similarity >= min_similarity:
+                scored.append((ep, similarity))
+
+        scored.sort(key=lambda item: (item[1], item[0].total_reward), reverse=True)
+        return scored[: max(0, int(limit))]
 
     def count(self) -> int:
         with self._connect() as conn:

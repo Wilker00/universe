@@ -42,6 +42,7 @@ class Episode:
     observation_schema: str = "continuous"
     action_schema: str = "continuous"
     action_type: str = "continuous"
+    task_description: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
     episode_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str = field(
@@ -49,7 +50,10 @@ class Episode:
     )
 
     def __post_init__(self) -> None:
+        if not self.task_description:
+            self.task_description = self.task
         self.observations = np.asarray(self.observations, dtype=np.float32)
+
 
         # Preserve integer semantics for discrete action spaces
         raw_actions = np.asarray(self.actions)

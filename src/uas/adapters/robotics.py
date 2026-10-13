@@ -86,3 +86,68 @@ def robotics_to_uas_episode(
         action_type="continuous",
         metadata=meta,
     )
+
+
+def panda_gym_to_uas_episode(
+    *,
+    observations: np.ndarray | Sequence[Any],
+    actions: np.ndarray | Sequence[Any],
+    rewards: np.ndarray | Sequence[float],
+    terminated: np.ndarray | Sequence[bool],
+    truncated: np.ndarray | Sequence[bool],
+    task: str = "panda_reach",
+    success: bool | None = None,
+    total_reward: float | None = None,
+    tags: Sequence[str] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> Episode:
+    """Specialized helper converting Panda-Gym rollouts into a UAS Episode."""
+    meta = dict(metadata or {})
+    all_tags = list(tags or [])
+    if "franka_panda" not in all_tags:
+        all_tags.append("franka_panda")
+
+    return robotics_to_uas_episode(
+        observations=observations,
+        actions=actions,
+        rewards=rewards,
+        terminated=terminated,
+        truncated=truncated,
+        task=task,
+        embodiment="franka_panda",
+        framework="panda_gym",
+        success=success,
+        total_reward=total_reward,
+        tags=all_tags,
+        metadata=meta,
+    )
+
+
+def uas_episode_to_panda_transitions(
+    episode: Episode,
+) -> list[dict[str, Any]]:
+    """Convert a UAS Episode into Panda-Gym transition dicts ready for replay."""
+    num_steps = episode.steps
+    has_next = len(episode.observations) == num_steps + 1
+    transitions = []
+
+    for t in range(num_steps):
+        obs = episode.observations[t].tolist()
+        next_obs = (
+            episode.observations[t + 1].tolist()
+            if has_next
+            else episode.observations[min(t + 1, num_steps - 1)].tolist()
+        )
+        transitions.append(
+            {
+                "obs": obs,
+                "action": episode.actions[t].tolist(),
+                "reward": float(episode.rewards[t]),
+                "next_obs": next_obs,
+                "done": bool(episode.terminated[t]),
+                "truncated": bool(episode.truncated[t]),
+                "info": {"task": episode.task, "framework": episode.framework},
+            }
+        )
+    return transitions
+
