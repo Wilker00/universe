@@ -111,6 +111,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     demo.add_argument("--directory", type=Path, default=Path("artifacts/demo"))
     demo.add_argument("--seed", type=int, default=0)
+
+    bridge_demo = subparsers.add_parser(
+        "bridge-demo",
+        help="Run cross-framework Multiverse -> MemoryBridge -> Gymnasium demo",
+    )
+    bridge_demo.add_argument(
+        "--directory",
+        type=Path,
+        default=None,
+        help="Optional directory to persist bridge records (uses tempdir if omitted)",
+    )
+    bridge_demo.add_argument(
+        "--train-steps",
+        type=int,
+        default=200,
+        help="Number of SAC training steps to run with transferred transitions",
+    )
     return parser
 
 
@@ -196,6 +213,11 @@ def main(argv: list[str] | None = None) -> None:
             retrieval_limit=4,
             max_prefill_transitions=500,
         )
+    elif args.command == "bridge-demo":
+        from uas.bridge import run_bridge_interop_demo
+
+        run_bridge_interop_demo(args.directory, steps_to_train=args.train_steps)
+
 
 
 def _check_environment(task_id: str) -> None:

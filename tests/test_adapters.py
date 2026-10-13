@@ -233,3 +233,43 @@ def test_cross_framework_compatibility() -> None:
     assert report.compatible is True
     assert report.observation_compatible is True
     assert report.action_compatible is True
+
+
+def test_robotics_adapter() -> None:
+    from uas.adapters.robotics import ROBOT_EMBODIMENTS, robotics_to_uas_episode
+
+    obs = np.zeros((10, 9), dtype=np.float32)
+    acts = np.zeros((9, 4), dtype=np.float32)
+    rews = np.ones(9, dtype=np.float32)
+    term = np.zeros(9, dtype=bool)
+    term[-1] = True
+    trunc = np.zeros(9, dtype=bool)
+
+    ep = robotics_to_uas_episode(
+        observations=obs,
+        actions=acts,
+        rewards=rews,
+        terminated=term,
+        truncated=trunc,
+        task="panda_reach",
+        embodiment="franka_panda",
+        framework="panda_gym",
+        success=True,
+    )
+
+    assert ep.framework == "panda_gym"
+    assert ep.embodiment == "franka_panda"
+    assert ep.metadata["robot_spec"]["joint_count"] == 7
+    assert ep.observation_dim == (9,)
+    assert ep.action_dim == (4,)
+    assert ep.steps == 9
+
+
+def test_bridge_interop_demo_runs_end_to_end(tmp_path: Path) -> None:
+    from uas.bridge import run_bridge_interop_demo
+
+    result = run_bridge_interop_demo(tmp_path, steps_to_train=10)
+    assert result["compatible"] is True
+    assert result["prefilled_transitions"] > 0
+    assert result["trained_timesteps"] == 10
+

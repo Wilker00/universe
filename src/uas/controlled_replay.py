@@ -10,7 +10,14 @@ import numpy as np
 
 from uas.memory import MemoryStore, RetrievedEpisode, TaskQuery
 
-CONTROLLED_MODES = ("no_memory", "random", "naive", "similarity", "governed")
+CONTROLLED_MODES = (
+    "no_memory",
+    "random",
+    "naive",
+    "similarity",
+    "governed",
+    "governed_diverse",
+)
 
 
 @dataclass(frozen=True)
@@ -19,6 +26,51 @@ class SampledTransition:
 
     episode: RetrievedEpisode
     transition_index: int
+
+
+def select_diverse_governed_episodes(
+    candidates: list[RetrievedEpisode],
+    budget: int,
+    diversity_weight: float = 0.5,
+) -> list[RetrievedEpisode]:
+    """Select episodes balancing task retrieval score with task-space diversity (MMR)."""
+    if len(candidates) <= budget:
+        return list(candidates)
+
+    selected: list[RetrievedEpisode] = []
+    remaining = list(candidates)
+
+    first = max(remaining, key=lambda item: item.retrieval_score)
+    selected.append(first)
+    remaining.remove(first)
+
+    while len(selected) < budget and remaining:
+        best_item = None
+        best_score = -float("inf")
+
+        for item in remaining:
+            vec_item = np.asarray(item.record.task_vector, dtype=np.float32)
+            min_dist = min(
+                float(
+                    np.linalg.norm(
+                        vec_item
+                        - np.asarray(s.record.task_vector, dtype=np.float32)
+                    )
+                )
+                for s in selected
+            )
+            mmr_score = (
+                1.0 - diversity_weight
+            ) * item.retrieval_score + diversity_weight * min_dist
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_item = item
+
+        if best_item is not None:
+            selected.append(best_item)
+            remaining.remove(best_item)
+
+    return selected
 
 
 def select_controlled_episodes(
@@ -52,6 +104,13 @@ def select_controlled_episodes(
     elif mode == "similarity":
         candidates = store.retrieve(
             query, mode="similarity", limit=store.count()
+        )
+    elif mode == "governed_diverse":
+        governed_candidates = store.retrieve(
+            query, mode="governed", limit=store.count()
+        )
+        candidates = select_diverse_governed_episodes(
+            governed_candidates, budget=episode_budget
         )
     else:
         candidates = store.retrieve(query, mode="governed", limit=store.count())

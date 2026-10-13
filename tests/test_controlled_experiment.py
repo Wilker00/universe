@@ -211,3 +211,70 @@ def test_controlled_experiment_resumes_completed_runs(tmp_path: Path) -> None:
     summary_path = output_dir / "summary.json"
     assert summary_path.is_file()
 
+
+def test_governed_diverse_selection(tmp_path: Path) -> None:
+    store = MemoryStore(tmp_path / "memory")
+
+    # Add 4 episodes with identical vector A (score 1.0)
+    for i in range(4):
+        record = EpisodeRecord.create(
+            environment_id=ENVIRONMENT_ID,
+            task_id=f"cluster_a_{i}",
+            task_family=TASK_FAMILY,
+            task_description="cluster a",
+            observation_schema=OBSERVATION_SCHEMA,
+            action_schema=ACTION_SCHEMA,
+            agent_id="agent",
+            policy_version="sac-v1",
+            policy_reference=None,
+            seed=i,
+            success=True,
+            total_reward=10.0,
+            normalized_score=1.0,
+            steps=10,
+            termination_reason="success",
+            collision_count=0,
+            task_vector=(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        )
+        store.add_episode(record, _trajectory(10))
+
+    # Add 2 episodes with distinct vector B (score 0.9)
+    for i in range(2):
+        record = EpisodeRecord.create(
+            environment_id=ENVIRONMENT_ID,
+            task_id=f"cluster_b_{i}",
+            task_family=TASK_FAMILY,
+            task_description="cluster b",
+            observation_schema=OBSERVATION_SCHEMA,
+            action_schema=ACTION_SCHEMA,
+            agent_id="agent",
+            policy_version="sac-v1",
+            policy_reference=None,
+            seed=10 + i,
+            success=True,
+            total_reward=9.0,
+            normalized_score=0.9,
+            steps=10,
+            termination_reason="success",
+            collision_count=0,
+            task_vector=(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+        )
+        store.add_episode(record, _trajectory(10))
+
+    query = query_for_task("hard_upper")
+
+    # Greedy governed takes only from cluster A because scores are highest (1.0)
+    greedy = select_controlled_episodes(
+        store, query, mode="governed", episode_budget=2, seed=0
+    )
+    assert all("cluster_a" in ep.record.task_id for ep in greedy)
+
+    # Governed diverse balances score with diversity and selects from both cluster A and cluster B
+    diverse = select_controlled_episodes(
+        store, query, mode="governed_diverse", episode_budget=2, seed=0
+    )
+    task_ids = [ep.record.task_id for ep in diverse]
+    assert any("cluster_a" in tid for tid in task_ids)
+    assert any("cluster_b" in tid for tid in task_ids)
+
+
