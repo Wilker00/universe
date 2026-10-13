@@ -278,3 +278,138 @@ def test_governed_diverse_selection(tmp_path: Path) -> None:
     assert any("cluster_b" in tid for tid in task_ids)
 
 
+def test_random_uniform_selection(tmp_path: Path) -> None:
+    store = MemoryStore(tmp_path / "memory")
+    for i in range(15):
+        _add_episode(store, index=i, success=i % 2 == 0, random_policy=i % 3 == 0, length=20)
+
+    query = query_for_task("hard_upper")
+    selected_1 = select_controlled_episodes(
+        store, query, mode="random_uniform", episode_budget=6, seed=42
+    )
+    selected_2 = select_controlled_episodes(
+        store, query, mode="random_uniform", episode_budget=6, seed=42
+    )
+    assert len(selected_1) == 6
+    assert [e.record.episode_id for e in selected_1] == [e.record.episode_id for e in selected_2]
+
+    # Verify loud failure when budget exceeds available candidates
+    with pytest.raises(ValueError, match="eligible episodes"):
+        select_controlled_episodes(
+            store, query, mode="random_uniform", episode_budget=20, seed=42
+        )
+
+
+def test_stratified_success_selection(tmp_path: Path) -> None:
+    store = MemoryStore(tmp_path / "memory")
+    idx = 0
+    for layout in ("open", "upper_gap", "lower_gap"):
+        for _ in range(5):
+            record = EpisodeRecord.create(
+                environment_id=ENVIRONMENT_ID,
+                task_id=layout,
+                task_family=TASK_FAMILY,
+                task_description=layout,
+                observation_schema=OBSERVATION_SCHEMA,
+                action_schema=ACTION_SCHEMA,
+                agent_id="agent",
+                policy_version="sac-v1",
+                policy_reference=None,
+                seed=idx,
+                success=True,
+                total_reward=10.0,
+                normalized_score=1.0,
+                steps=20,
+                termination_reason="success",
+                collision_count=0,
+                task_vector=(0.1 * idx,) * 8,
+            )
+            store.add_episode(record, _trajectory(20))
+            idx += 1
+
+    query = query_for_task("hard_upper")
+    selected = select_controlled_episodes(
+        store, query, mode="stratified_success", episode_budget=12, seed=123
+    )
+    assert len(selected) == 12
+    counts = Counter(ep.record.task_id for ep in selected)
+    assert counts["open"] == 4
+    assert counts["upper_gap"] == 4
+    assert counts["lower_gap"] == 4
+    assert all(ep.record.success for ep in selected)
+
+    # Test balanced transitions sampling
+    transitions = sample_balanced_transitions(
+        store, selected, transition_budget=200, seed=456
+    )
+    assert len(transitions) == 200
+    t_counts = Counter(t.episode.record.episode_id for t in transitions)
+    assert sorted(t_counts.values()) == [16] * 4 + [17] * 8
+
+    with pytest.raises(ValueError, match="evenly divisible"):
+        select_controlled_episodes(
+            store, query, mode="stratified_success", episode_budget=10, seed=123
+        )
+
+    with pytest.raises(ValueError, match="requires 6 successful episodes"):
+        select_controlled_episodes(
+            store, query, mode="stratified_success", episode_budget=18, seed=123
+        )
+
+
+def test_random_concentrated_selection(tmp_path: Path) -> None:
+    store_real = MemoryStore(tmp_path / "memory_real")
+    from uas.envs.continuous_world import ContinuousWorldEnv
+    envs = {l: ContinuousWorldEnv(task_id=l) for l in ("open", "upper_gap", "lower_gap")}
+    idx = 0
+    for layout, env in envs.items():
+        tvec = env.task_vector
+        for _ in range(10):
+            record = EpisodeRecord.create(
+                environment_id=ENVIRONMENT_ID,
+                task_id=layout,
+                task_family=TASK_FAMILY,
+                task_description=layout,
+                observation_schema=OBSERVATION_SCHEMA,
+                action_schema=ACTION_SCHEMA,
+                agent_id="random-explorer",
+                policy_version="random-v1",
+                policy_reference=None,
+                seed=idx,
+                success=False,
+                total_reward=0.0,
+                normalized_score=0.0,
+                steps=20,
+                termination_reason="time_limit",
+                collision_count=0,
+                task_vector=tuple(tvec),
+            )
+            store_real.add_episode(record, _trajectory(20))
+            idx += 1
+
+    query_upper = query_for_task("hard_upper")
+    selected_upper = select_controlled_episodes(
+        store_real, query_upper, mode="random_concentrated", episode_budget=12, seed=99
+    )
+    assert len(selected_upper) == 12
+    counts_u = Counter(ep.record.task_id for ep in selected_upper)
+    assert counts_u["upper_gap"] == 8
+    assert counts_u["open"] == 4
+    assert counts_u["lower_gap"] == 0
+
+    query_lower = query_for_task("hard_lower")
+    selected_lower = select_controlled_episodes(
+        store_real, query_lower, mode="random_concentrated", episode_budget=12, seed=99
+    )
+    assert len(selected_lower) == 12
+    counts_l = Counter(ep.record.task_id for ep in selected_lower)
+    assert counts_l["lower_gap"] == 8
+    assert counts_l["upper_gap"] == 4
+    assert counts_l["open"] == 0
+
+    with pytest.raises(ValueError, match="requires 16 random episodes"):
+        select_controlled_episodes(
+            store_real, query_upper, mode="random_concentrated", episode_budget=24, seed=99
+        )
+
+

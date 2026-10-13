@@ -17,6 +17,9 @@ CONTROLLED_MODES = (
     "similarity",
     "governed",
     "governed_diverse",
+    "random_uniform",
+    "stratified_success",
+    "random_concentrated",
 )
 
 
@@ -33,7 +36,12 @@ def select_diverse_governed_episodes(
     budget: int,
     diversity_weight: float = 0.5,
 ) -> list[RetrievedEpisode]:
-    """Select episodes balancing task retrieval score with task-space diversity (MMR)."""
+    """Select episodes balancing task retrieval score with task-space diversity (MMR).
+
+    Note: With 8 identical top-layout successful episodes and diversity_weight=0.5
+    normalized by sqrt(8), MMR picks the top candidate, selects 1 candidate from each
+    remaining distinct layout to maximize novelty, and fills the remaining slots greedily.
+    """
     if len(candidates) <= budget:
         return list(candidates)
 
@@ -44,13 +52,15 @@ def select_diverse_governed_episodes(
     selected.append(first)
     remaining.remove(first)
 
+    norm_const = np.sqrt(8.0)
+
     while len(selected) < budget and remaining:
         best_item = None
         best_score = -float("inf")
 
         for item in remaining:
             vec_item = np.asarray(item.record.task_vector, dtype=np.float32)
-            min_dist = min(
+            raw_min_dist = min(
                 float(
                     np.linalg.norm(
                         vec_item
@@ -59,6 +69,7 @@ def select_diverse_governed_episodes(
                 )
                 for s in selected
             )
+            min_dist = raw_min_dist / norm_const
             mmr_score = (
                 1.0 - diversity_weight
             ) * item.retrieval_score + diversity_weight * min_dist
@@ -101,6 +112,78 @@ def select_controlled_episodes(
     elif mode == "naive":
         candidates = list(compatible)
         random.shuffle(candidates)
+    elif mode == "random_uniform":
+        candidates = list(compatible)
+        random.shuffle(candidates)
+    elif mode == "stratified_success":
+        source_layouts = ("open", "upper_gap", "lower_gap")
+        quota_per_layout = episode_budget // len(source_layouts)
+        if episode_budget % len(source_layouts) != 0:
+            raise ValueError(
+                f"Episode budget {episode_budget} must be evenly divisible by {len(source_layouts)} for stratified_success"
+            )
+        by_layout: dict[str, list[RetrievedEpisode]] = {k: [] for k in source_layouts}
+        for item in compatible:
+            if item.record.success and item.record.task_id in by_layout:
+                by_layout[item.record.task_id].append(item)
+
+        selected: list[RetrievedEpisode] = []
+        for layout in source_layouts:
+            layout_candidates = by_layout[layout]
+            if len(layout_candidates) < quota_per_layout:
+                raise ValueError(
+                    f"Mode 'stratified_success' requires {quota_per_layout} successful episodes for layout '{layout}', "
+                    f"but only found {len(layout_candidates)}."
+                )
+            random.shuffle(layout_candidates)
+            selected.extend(layout_candidates[:quota_per_layout])
+        return selected
+    elif mode == "random_concentrated":
+        primary_quota = int(round(episode_budget * (8.0 / 12.0)))
+        secondary_quota = episode_budget - primary_quota
+
+        query_vec = np.asarray(query.task_vector, dtype=np.float32)
+        random_candidates = [
+            item for item in compatible
+            if item.record.policy_version.startswith("random")
+        ]
+        by_layout: dict[str, list[RetrievedEpisode]] = {}
+        layout_mean_vec: dict[str, np.ndarray] = {}
+        for item in random_candidates:
+            by_layout.setdefault(item.record.task_id, []).append(item)
+            vec = np.asarray(item.record.task_vector, dtype=np.float32)
+            if item.record.task_id not in layout_mean_vec:
+                layout_mean_vec[item.record.task_id] = vec
+
+        if len(layout_mean_vec) < 2:
+            raise ValueError(
+                f"Mode 'random_concentrated' requires at least 2 candidate layouts, but found {len(layout_mean_vec)}"
+            )
+
+        ranked_layouts = sorted(
+            layout_mean_vec.keys(),
+            key=lambda lid: float(np.linalg.norm(query_vec - layout_mean_vec[lid])),
+        )
+        primary_layout = ranked_layouts[0]
+        secondary_layout = ranked_layouts[1]
+
+        primary_pool = by_layout.get(primary_layout, [])
+        secondary_pool = by_layout.get(secondary_layout, [])
+
+        if len(primary_pool) < primary_quota:
+            raise ValueError(
+                f"Mode 'random_concentrated' requires {primary_quota} random episodes from layout '{primary_layout}', "
+                f"but only found {len(primary_pool)}."
+            )
+        if len(secondary_pool) < secondary_quota:
+            raise ValueError(
+                f"Mode 'random_concentrated' requires {secondary_quota} random episodes from layout '{secondary_layout}', "
+                f"but only found {len(secondary_pool)}."
+            )
+
+        random.shuffle(primary_pool)
+        random.shuffle(secondary_pool)
+        return primary_pool[:primary_quota] + secondary_pool[:secondary_quota]
     elif mode == "similarity":
         candidates = store.retrieve(
             query, mode="similarity", limit=store.count()
@@ -110,7 +193,9 @@ def select_controlled_episodes(
             query, mode="governed", limit=store.count()
         )
         candidates = select_diverse_governed_episodes(
-            governed_candidates, budget=episode_budget
+            governed_candidates,
+            budget=episode_budget,
+            diversity_weight=0.5,
         )
     else:
         candidates = store.retrieve(query, mode="governed", limit=store.count())

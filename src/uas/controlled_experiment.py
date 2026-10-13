@@ -135,11 +135,27 @@ def run_controlled_experiment(
                     sampling_seed=sampling_seed,
                 )
 
+    store_records = sorted(store.records(), key=lambda r: r.episode_id)
+    store_hasher = hashlib.sha256()
+    for r in store_records:
+        t = store.load_trajectory(r)
+        store_hasher.update(r.episode_id.encode("utf-8"))
+        store_hasher.update(r.task_id.encode("utf-8"))
+        store_hasher.update(str(r.success).encode("utf-8"))
+        store_hasher.update(r.policy_version.encode("utf-8"))
+        store_hasher.update(t.observations.tobytes())
+        store_hasher.update(t.actions.tobytes())
+        store_hasher.update(t.rewards.tobytes())
+        store_hasher.update(t.terminated.tobytes())
+        store_hasher.update(t.truncated.tobytes())
+    memory_hash = store_hasher.hexdigest()
+
     configuration = {
         "protocol_version": "0.2",
         "tasks": selected_tasks,
         "modes": selected_modes,
         "seeds": selected_seeds,
+        "memory_hash": memory_hash,
         "train_steps": train_steps,
         "evaluation_interval": evaluation_interval,
         "evaluation_episodes": evaluation_episodes,

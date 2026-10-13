@@ -74,7 +74,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--memory-dir", type=Path, default=Path("artifacts/memory")
     )
     controlled.add_argument(
-        "--output-dir", type=Path, default=Path("artifacts/v0.2-results")
+        "--output-dir",
+        "--out",
+        dest="output_dir",
+        type=Path,
+        default=Path("artifacts/v0.2-results"),
     )
     controlled.add_argument(
         "--tasks",
@@ -217,7 +221,6 @@ def main(argv: list[str] | None = None) -> None:
         from uas.bridge import run_bridge_interop_demo
 
         run_bridge_interop_demo(args.directory, steps_to_train=args.train_steps)
-
 
 
 def _check_environment(task_id: str) -> None:
